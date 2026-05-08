@@ -1,5 +1,5 @@
 {
-  "model_name": "ensemble",
+  "model_name": "improved_ensemble",
   "random_state": 42,
   "train_rows": 56000,
   "test_rows": 24000,
@@ -9,18 +9,18 @@
     10.0
   ],
   "cv": {
-    "rmse": 1.2200678770458786,
-    "mae": 0.9733543503922559,
-    "r2": 0.701130877168466,
+    "rmse": 1.217117113218992,
+    "mae": 0.9710931306916292,
+    "r2": 0.7025747734865903,
     "n_splits": 5,
     "rows": 56000,
-    "fold_rmse_std": 0.010883804421614574,
-    "fold_mae_std": 0.007957624264438122
+    "fold_rmse_std": 0.010785273872141394,
+    "fold_mae_std": 0.008129406877360888
   },
-  "cv_runtime_seconds": 45.54,
-  "final_fit_runtime_seconds": 11.866,
+  "cv_runtime_seconds": 146.04,
+  "final_fit_runtime_seconds": 42.96,
   "model_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/models/final_model.joblib",
-  "submission_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/data/submissions/submission_ensemble_20260509_000151.csv",
+  "submission_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/data/submissions/submission_improved_ensemble_20260509_011219.csv",
   "latest_submission_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/data/submissions/submission_latest.csv",
-  "total_runtime_seconds": 60.783
+  "total_runtime_seconds": 191.988
 }

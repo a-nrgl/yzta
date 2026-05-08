@@ -29,9 +29,16 @@ Train the default ensemble, run five-fold CV, save the model, and write submissi
 python -m src.train
 ```
 
+Train the current improved ensemble and write the competition file:
+
+```bash
+python -m src.train --model-name improved_ensemble --submission-name submission_improved.csv
+```
+
 Useful alternatives:
 
 ```bash
+python -m src.train --model-name improved_ensemble
 python -m src.train --model-name hgb
 python -m src.train --model-name ridge
 python -m src.train --skip-cv
@@ -49,14 +56,15 @@ Main outputs:
 
 Latest validated run:
 
-- model: `ensemble`
-- five-fold OOF RMSE: `1.2201`
-- five-fold OOF MAE: `0.9734`
-- five-fold OOF R2: `0.7011`
+- model: `improved_ensemble`
+- five-fold OOF RMSE: `1.2171`
+- five-fold OOF MAE: `0.9711`
+- five-fold OOF R2: `0.7026`
+- final submission: `data/submissions/submission_improved.csv`
 
 ## Modeling Approach
 
-The default model is a weighted ensemble of two `HistGradientBoostingRegressor` variants and a regularized ridge model. The preprocessing pipeline handles:
+The original default model is a weighted ensemble of two `HistGradientBoostingRegressor` variants and a regularized ridge model. The improved model adds richer sleep/lifestyle features plus native-categorical HGB variants. The preprocessing pipeline handles:
 
 - median imputation plus missing indicators for numeric columns
 - constant imputation and one-hot encoding for categorical columns

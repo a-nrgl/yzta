@@ -20,7 +20,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-name",
         default="ensemble",
-        choices=["ridge", "hgb", "hgb_regularized", "extra_trees", "ensemble"],
+        choices=[
+            "ridge",
+            "hgb",
+            "hgb_regularized",
+            "extra_trees",
+            "ensemble",
+            "improved_ensemble",
+        ],
         help="Estimator recipe to train.",
     )
     parser.add_argument("--n-splits", type=int, default=N_SPLITS, help="Number of CV folds.")

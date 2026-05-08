@@ -5,6 +5,8 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+from typing import Callable
+
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 
 from src.config import ID_COLUMN
@@ -99,9 +101,73 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def infer_feature_columns(df: pd.DataFrame) -> tuple[list[str], list[str]]:
+def add_improved_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add the stronger feature set selected by cross-validation experiments."""
+    out = add_features(df)
+
+    rem = out["rem_yuzdesi"]
+    deep = out["derin_uyku_yuzdesi"]
+    latency = out["uykuya_dalma_suresi_dk"]
+    wakeups = out["gecelik_uyanma_sayisi"]
+    caffeine = out["uyku_oncesi_kafein_mg"]
+    screen = out["uyku_oncesi_ekran_suresi_dk"]
+    steps = out["gunluk_adim_sayisi"]
+    nap = out["sekerleme_suresi_dk"]
+    stress = out["stres_skoru"]
+    work = out["gunluk_calisma_saati"]
+    bmi = out["vucut_kitle_indeksi"]
+    resting_hr = out["dinlenik_nabiz_bpm"]
+    room_temp = out["oda_sicakligi_celsius"]
+
+    out["isik_uyku_yuzdesi"] = 100.0 - rem - deep
+    out["sleep_quality_ratio_v2"] = deep / (rem + 1.0)
+    out["sleep_fragmentation_v2"] = wakeups * latency
+    out["pre_sleep_stimulation"] = caffeine + screen
+    out["screen_caffeine_interaction_v2"] = caffeine * screen
+    out["activity_stress_ratio"] = steps / (stress + 1.0)
+    out["work_stress_interaction_v2"] = work * stress
+    out["bmi_resting_hr_interaction"] = bmi * resting_hr
+    out["weekend_sleep_instability_v2"] = out["hafta_sonu_uyku_farki_saat"].abs()
+    out["nap_activity_ratio"] = nap / (steps + 1.0)
+    out["temp_comfort_quadratic"] = (room_temp - 19.0) ** 2
+    out["sleep_efficiency_proxy"] = (
+        rem
+        + deep
+        - wakeups * 1.25
+        - latency * 0.20
+        - screen / 120.0
+        - caffeine / 200.0
+    )
+    out["recovery_load_balance"] = (rem + deep + steps / 1000.0) / (
+        stress + work + wakeups + 1.0
+    )
+    out["mental_stress_load"] = stress * (1.0 - out["saglikli_mi"])
+    out["weekend_chronotype_stress"] = (
+        out["hafta_sonu_mu"] * stress * (out["gece_insani_mi"] + 1.0)
+    )
+
+    stress_group = out["stres_grubu"].astype("string").fillna("Missing")
+    out["meslek_stres_grubu"] = (
+        out["meslek"].astype("string").fillna("Missing") + "__" + stress_group
+    )
+    out["ruh_stres_grubu"] = (
+        out["ruh_sagligi_durumu"].astype("string").fillna("Missing") + "__" + stress_group
+    )
+    out["ulke_gun_tipi"] = (
+        out["ulke_norm"].astype("string").fillna("Missing")
+        + "__"
+        + out["gun_tipi"].astype("string").fillna("Missing")
+    )
+
+    return out
+
+
+def infer_feature_columns(
+    df: pd.DataFrame,
+    feature_func: Callable[[pd.DataFrame], pd.DataFrame] = add_features,
+) -> tuple[list[str], list[str]]:
     """Infer numeric and categorical columns after feature engineering."""
-    engineered = add_features(df)
+    engineered = feature_func(df)
     numeric_columns = [
         col for col in engineered.select_dtypes(include=[np.number]).columns if col != ID_COLUMN
     ]
@@ -111,16 +177,18 @@ def infer_feature_columns(df: pd.DataFrame) -> tuple[list[str], list[str]]:
     return numeric_columns, categorical_columns
 
 
-def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
+def make_preprocessor(
+    df: pd.DataFrame,
+    feature_func: Callable[[pd.DataFrame], pd.DataFrame] = add_features,
+    scale_numeric: bool = True,
+) -> ColumnTransformer:
     """Build the preprocessing transformer from a representative raw feature frame."""
-    numeric_columns, categorical_columns = infer_feature_columns(df)
+    numeric_columns, categorical_columns = infer_feature_columns(df, feature_func=feature_func)
 
-    numeric_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
-            ("scaler", StandardScaler()),
-        ]
-    )
+    numeric_steps = [("imputer", SimpleImputer(strategy="median", add_indicator=True))]
+    if scale_numeric:
+        numeric_steps.append(("scaler", StandardScaler()))
+    numeric_transformer = Pipeline(steps=numeric_steps)
     categorical_transformer = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="constant", fill_value="Missing")),
@@ -141,6 +209,24 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
     )
 
 
-def make_feature_transformer() -> FunctionTransformer:
-    return FunctionTransformer(add_features, validate=False)
+def make_feature_transformer(
+    feature_func: Callable[[pd.DataFrame], pd.DataFrame] = add_features,
+) -> FunctionTransformer:
+    return FunctionTransformer(feature_func, validate=False)
 
+
+def _to_native_hgb_frame(df: pd.DataFrame, feature_func: Callable[[pd.DataFrame], pd.DataFrame]):
+    out = feature_func(df).drop(columns=[ID_COLUMN])
+    for col in out.select_dtypes(exclude="number").columns:
+        out[col] = out[col].astype("category")
+    return out
+
+
+def to_native_hgb_current_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Return current features with pandas categorical dtypes for native HGB splits."""
+    return _to_native_hgb_frame(df, add_features)
+
+
+def to_native_hgb_improved_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Return improved features with pandas categorical dtypes for native HGB splits."""
+    return _to_native_hgb_frame(df, add_improved_features)
