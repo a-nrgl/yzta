@@ -1,0 +1,26 @@
+{
+  "model_name": "ensemble",
+  "random_state": 42,
+  "train_rows": 56000,
+  "test_rows": 24000,
+  "target": "bilissel_performans_skoru",
+  "prediction_bounds": [
+    0.0,
+    10.0
+  ],
+  "cv": {
+    "rmse": 1.2200678770458786,
+    "mae": 0.9733543503922559,
+    "r2": 0.701130877168466,
+    "n_splits": 5,
+    "rows": 56000,
+    "fold_rmse_std": 0.010883804421614574,
+    "fold_mae_std": 0.007957624264438122
+  },
+  "cv_runtime_seconds": 45.54,
+  "final_fit_runtime_seconds": 11.866,
+  "model_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/models/final_model.joblib",
+  "submission_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/data/submissions/submission_ensemble_20260509_000151.csv",
+  "latest_submission_path": "/home/aliyasarcelik/Documents/JupyterLab Files/yzta-2026-datathon/data/submissions/submission_latest.csv",
+  "total_runtime_seconds": 60.783
+}
